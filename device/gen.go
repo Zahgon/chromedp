@@ -3,17 +3,10 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
-	"errors"
 	"flag"
 	"fmt"
-	"go/format"
-	"io"
-	"net/http"
 	"os"
 	"regexp"
-	"strings"
 )
 
 const deviceDescriptorsURL = "https://raw.githubusercontent.com/puppeteer/puppeteer/main/packages/puppeteer-core/src/common/Device.ts"
@@ -42,46 +35,7 @@ type deviceDescriptor struct {
 
 var cleanRE = regexp.MustCompile(`[^a-zA-Z0-9_]`)
 
-// run runs the program.
-func run(out string) error {
-	descriptors, err := get()
-	if err != nil {
-		return err
-	}
-	// add reset device
-	descriptors = append([]deviceDescriptor{{}}, descriptors...)
-	buf := new(bytes.Buffer)
-	fmt.Fprintf(buf, hdr, deviceDescriptorsURL)
-	fmt.Fprintln(buf, "\n// Devices.")
-	fmt.Fprintln(buf, "const (")
-	for i, d := range descriptors {
-		if i == 0 {
-			fmt.Fprintln(buf, "// Reset is the reset device.")
-			fmt.Fprintln(buf, "Reset infoType = iota\n")
-		} else {
-			name := cleanRE.ReplaceAllString(d.Name, "")
-			name = strings.ToUpper(name[0:1]) + name[1:]
-			fmt.Fprintf(buf, "// %s is the %q device.\n", name, d.Name)
-			fmt.Fprintf(buf, "%s\n\n", name)
-		}
-	}
-	fmt.Fprintln(buf, ")\n")
-	fmt.Fprintln(buf, "// devices is the list of devices.")
-	fmt.Fprintln(buf, "var devices = [...]Info{")
-	for _, d := range descriptors {
-		fmt.Fprintf(buf, "{%q, %q, %d, %d, %f, %t, %t, %t},\n",
-			d.Name, d.UserAgent,
-			d.Viewport.Width, d.Viewport.Height, d.Viewport.DeviceScaleFactor,
-			d.Viewport.IsLandscape, d.Viewport.IsMobile, d.Viewport.HasTouch,
-		)
-	}
-	fmt.Fprintln(buf, "}")
-	src, err := format.Source(buf.Bytes())
-	if err != nil {
-		return err
-	}
-	return os.WriteFile(out, src, 0o644)
-}
+func run(out string) error { _ = "STUB: not implemented"; return nil }
 
 var (
 	startRE        = regexp.MustCompile(`(?m)^const\s+knownDevices\s*=\s*\[`)
@@ -91,41 +45,7 @@ var (
 	fixClosesRE    = regexp.MustCompile(`([\]\}]),\n(\s*[\]\}])`)
 )
 
-// get retrieves and decodes the device descriptors.
-func get() ([]deviceDescriptor, error) {
-	res, err := http.Get(deviceDescriptorsURL)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
-	if res.StatusCode != 200 {
-		return nil, fmt.Errorf("got status code %d", res.StatusCode)
-	}
-	buf, err := io.ReadAll(res.Body)
-	if err != nil {
-		return nil, err
-	}
-	start := startRE.FindIndex(buf)
-	if start == nil {
-		return nil, errors.New("could not find start")
-	}
-	buf = buf[start[1]-1:]
-	end := endRE.FindIndex(buf)
-	if end == nil {
-		return nil, errors.New("could not find end")
-	}
-	buf = buf[:end[1]-10]
-	buf = bytes.Replace(buf, []byte("'"), []byte(`"`), -1)
-	buf = fixLandscapeRE.ReplaceAll(buf, []byte(`"isLandscape": $1`))
-	buf = fixKeysRE.ReplaceAll(buf, []byte(`$1"$2":`))
-	buf = fixClosesRE.ReplaceAll(buf, []byte("$1\n$2"))
-	buf = fixClosesRE.ReplaceAll(buf, []byte("$1\n$2"))
-	var descriptors []deviceDescriptor
-	if err := json.Unmarshal(buf, &descriptors); err != nil {
-		return nil, err
-	}
-	return descriptors, nil
-}
+func get() ([]deviceDescriptor, error) { _ = "STUB: not implemented"; return nil, nil }
 
 const hdr = `// Package device contains device emulation definitions for use with chromedp's
 // Emulate action.
