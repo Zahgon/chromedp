@@ -4,5 +4,4 @@ package chromedp
 
 import "os/exec"
 
-func allocateCmdOptions(cmd *exec.Cmd) {
-}
+func allocateCmdOptions(cmd *exec.Cmd) { _ = "STUB: not implemented"; return }
